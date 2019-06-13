@@ -83,3 +83,48 @@ RMSE: 8.46205029631583
 
 ### 可视化
 用TSNE进行数据降维并展示聚类结果
+
+---
+## 2.CIFAR-10数据集图像分类
+### 数据集简介
+该数据集共有60000张彩色图像，图像为32*32，供10类，每类6000张图，50000张用于训练，构成5个训练批，每一批10000张图；10000张用于测试。测试批的数据取自10类中的每一类，每一类随机取1000张。训练批为剩下的随机抽取。
+
+### 数据预处理
+对图像进行归一化，将标签变为one hot向量
+```
+x_img_train_normalize = x_img_train.astype('float32') / 255.0
+x_img_test_normalize = x_img_test.astype('float32') / 255.0
+from keras.utils import np_utils
+y_label_train_OneHot = np_utils.to_categorical(y_label_train)
+y_label_test_OneHot = np_utils.to_categorical(y_label_test)
+```
+### 搭建模型
+同样使用序贯模型，CNN为两层卷积层和池化层
+```
+model = Sequential()
+#卷积层和池化层
+model.add(Conv2D(filters=32,kernel_size=(3,3),input_shape=(32, 32,3), activation='relu', padding='same'))
+model.add(Dropout(rate=0.25))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+#卷积层和池化层
+model.add(Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding='same'))
+model.add(Dropout(0.25))
+model.add(MaxPooling2D(pool_size=(2, 2))) 
+#建立神经网络
+model.add(Flatten()) 
+model.add(Dropout(rate=0.25))
+model.add(Dense(1024, activation='relu')) 
+model.add(Dropout(rate=0.25))
+model.add(Dense(10, activation='softmax')) 
+```
+### 训练模型
+10批，每批大小为128
+```
+model.compile(loss='categorical_crossentropy',optimizer='adam', metrics=['accuracy'])
+training=model.fit(x_img_train_normalize, y_label_train_OneHot,validation_split=0.2,epochs=10, batch_size=128, verbose=1) 
+```
+### 模型评估
+```
+scores = model.evaluate(x_img_test_normalize, y_label_test_OneHot, verbose=0)
+```
+结果为0.8069150501251221
